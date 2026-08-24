@@ -1,0 +1,51 @@
+// Esquema de base de datos para la plataforma de encuestas
+// Usa Postgres (recomendado: Vercel Postgres, Neon o Supabase - todos tienen plan gratuito)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Study {
+  id          String     @id @default(cuid())
+  name        String
+  description String?
+  slug        String     @unique
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  questions   Question[]
+  responses   Response[]
+}
+
+model Question {
+  id        String   @id @default(cuid())
+  studyId   String
+  study     Study    @relation(fields: [studyId], references: [id], onDelete: Cascade)
+  order     Int
+  text      String
+  // Tipos: 'single' (opción única), 'multiple' (selección múltiple),
+  // 'text' (respuesta abierta corta), 'textarea' (respuesta abierta larga),
+  // 'scale' (escala tipo Likert), 'number' (numérica)
+  type      String
+  options   Json?
+  required  Boolean  @default(true)
+  varName   String?
+
+  @@index([studyId])
+}
+
+model Response {
+  id        String   @id @default(cuid())
+  studyId   String
+  study     Study    @relation(fields: [studyId], references: [id], onDelete: Cascade)
+  answers   Json
+  createdAt DateTime @default(now())
+  userAgent String?
+
+  @@index([studyId])
+}
