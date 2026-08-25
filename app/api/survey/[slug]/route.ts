@@ -16,6 +16,10 @@ export async function GET(_req: NextRequest, { params }: { params: { slug: strin
       id: study.id,
       name: study.name,
       description: study.description,
+      institution: study.institution,
+      targetAudience: study.targetAudience,
+      presentation: study.presentation,
+      instructions: study.instructions,
       questions: study.questions.map((q) => ({
         id: q.id,
         text: q.text,

@@ -27,6 +27,14 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (typeof body.name === 'string') data.name = body.name.trim();
   if (typeof body.description === 'string' || body.description === null)
     data.description = body.description?.trim() || null;
+  if (typeof body.institution === 'string' || body.institution === null)
+    data.institution = body.institution?.trim() || null;
+  if (typeof body.targetAudience === 'string' || body.targetAudience === null)
+    data.targetAudience = body.targetAudience?.trim() || null;
+  if (typeof body.presentation === 'string' || body.presentation === null)
+    data.presentation = body.presentation?.trim() || null;
+  if (typeof body.instructions === 'string' || body.instructions === null)
+    data.instructions = body.instructions?.trim() || null;
   if (typeof body.isActive === 'boolean') data.isActive = body.isActive;
 
   const study = await prisma.study.update({ where: { id: params.id }, data });

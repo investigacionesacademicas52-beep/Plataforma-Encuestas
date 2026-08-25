@@ -14,12 +14,25 @@ interface Props {
   slug: string;
   studyName: string;
   studyDescription: string | null;
+  institution?: string | null;
+  targetAudience?: string | null;
+  presentation?: string | null;
+  instructions?: string | null;
   questions: Question[];
 }
 
 type AnswerValue = string | string[] | number | undefined;
 
-export default function SurveyForm({ slug, studyName, studyDescription, questions }: Props) {
+export default function SurveyForm({
+  slug,
+  studyName,
+  studyDescription,
+  institution,
+  targetAudience,
+  presentation,
+  instructions,
+  questions,
+}: Props) {
   const [answers, setAnswers] = useState<Record<string, AnswerValue>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -73,9 +86,39 @@ export default function SurveyForm({ slug, studyName, studyDescription, question
 
   return (
     <div className="mx-auto max-w-xl px-4 py-8 sm:py-12">
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold text-gray-900 sm:text-2xl">{studyName}</h1>
-        {studyDescription && <p className="mt-2 text-sm text-gray-600">{studyDescription}</p>}
+      <div className="mb-6 card">
+        {institution && (
+          <p className="mb-1 text-center text-xs font-semibold uppercase tracking-wide text-gray-500">
+            {institution}
+          </p>
+        )}
+        <h1 className="text-center text-xl font-semibold text-gray-900 sm:text-2xl">{studyName}</h1>
+        {studyDescription && (
+          <p className="mt-2 text-center text-sm text-gray-600">{studyDescription}</p>
+        )}
+        {targetAudience && (
+          <p className="mt-3 text-sm italic text-gray-600">
+            <span className="font-medium not-italic">Dirigido a: </span>
+            {targetAudience}
+          </p>
+        )}
+        {presentation && (
+          <div className="mt-4 space-y-2 text-sm text-gray-700">
+            {presentation.split('\n\n').map((para, i) => (
+              <p key={i}>{para}</p>
+            ))}
+          </div>
+        )}
+        {instructions && (
+          <div className="mt-4 rounded-lg bg-brand-50 p-3 text-sm text-gray-700">
+            <p className="mb-1 font-medium text-brand-700">Instrucciones</p>
+            {instructions.split('\n\n').map((para, i) => (
+              <p key={i} className="mt-1">
+                {para}
+              </p>
+            ))}
+          </div>
+        )}
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">

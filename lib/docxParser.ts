@@ -198,6 +198,7 @@ function parseFromPlainText(rawText: string): ParsedQuestion[] {
 export async function parseDocxToQuestions(buffer: Buffer): Promise<{
   questions: ParsedQuestion[];
   rawText: string;
+  preamble: string;
 }> {
   const { value: html } = await mammoth.convertToHtml({ buffer });
   const $ = cheerio.load(html);
@@ -211,5 +212,18 @@ export async function parseDocxToQuestions(buffer: Buffer): Promise<{
     questions = parseFromPlainText(rawText);
   }
 
-  return { questions, rawText };
+  // Todo el texto ANTES de la primera pregunta numerada se guarda como
+  // "preámbulo" (presentación / instrucciones), para poder mostrarlo luego
+  // en la parte superior de la encuesta.
+  const lines = rawText.split(/\r?\n/).map((l) => l.trim());
+  const firstQuestionIdx = lines.findIndex((l) => QUESTION_REGEX.test(l));
+  const preamble =
+    firstQuestionIdx > 0
+      ? lines
+          .slice(0, firstQuestionIdx)
+          .filter(Boolean)
+          .join('\n\n')
+      : '';
+
+  return { questions, rawText, preamble };
 }

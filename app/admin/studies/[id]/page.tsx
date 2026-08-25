@@ -8,6 +8,10 @@ interface StudyDetail {
   id: string;
   name: string;
   description: string | null;
+  institution: string | null;
+  targetAudience: string | null;
+  presentation: string | null;
+  instructions: string | null;
   slug: string;
   isActive: boolean;
   questions: EditableQuestion[];
@@ -27,6 +31,12 @@ export default function StudyDetailPage() {
   const [copied, setCopied] = useState(false);
   const [surveyUrl, setSurveyUrl] = useState('');
 
+  const [institution, setInstitution] = useState('');
+  const [targetAudience, setTargetAudience] = useState('');
+  const [presentation, setPresentation] = useState('');
+  const [instructions, setInstructions] = useState('');
+  const [savingFormal, setSavingFormal] = useState(false);
+
   const load = useCallback(async () => {
     const res = await fetch(`/api/studies/${id}`);
     if (!res.ok) {
@@ -36,6 +46,10 @@ export default function StudyDetailPage() {
     const data = await res.json();
     setStudy(data.study);
     setQuestions(data.study.questions);
+    setInstitution(data.study.institution || '');
+    setTargetAudience(data.study.targetAudience || '');
+    setPresentation(data.study.presentation || '');
+    setInstructions(data.study.instructions || '');
   }, [id, router]);
 
   useEffect(() => {
@@ -92,6 +106,28 @@ export default function StudyDetailPage() {
       setMessage('Cuestionario guardado correctamente.');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleSaveFormalInfo() {
+    setError('');
+    setMessage('');
+    setSavingFormal(true);
+    try {
+      const res = await fetch(`/api/studies/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ institution, targetAudience, presentation, instructions }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'No se pudo guardar la información formal.');
+        return;
+      }
+      setStudy((prev) => (prev ? { ...prev, ...data.study } : prev));
+      setMessage('Información formal guardada correctamente.');
+    } finally {
+      setSavingFormal(false);
     }
   }
 
@@ -178,6 +214,71 @@ export default function StudyDetailPage() {
           className="text-sm"
         />
         {uploading && <p className="mt-2 text-sm text-gray-500">Procesando documento...</p>}
+      </div>
+
+      {/* Encabezado formal del instrumento */}
+      <div className="card">
+        <h2 className="mb-1 font-medium text-gray-900">Encabezado formal de la encuesta</h2>
+        <p className="mb-3 text-sm text-gray-500">
+          Esta información aparece en la parte superior del cuestionario, tal como en un
+          instrumento de investigación formal. Todos los campos son opcionales.
+        </p>
+
+        <div className="space-y-3">
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Institución / Universidad
+            </label>
+            <input
+              className="input"
+              value={institution}
+              onChange={(e) => setInstitution(e.target.value)}
+              placeholder="Ej. Universidad de Panamá — Facultad de Administración de Empresas"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Dirigido a</label>
+            <input
+              className="input"
+              value={targetAudience}
+              onChange={(e) => setTargetAudience(e.target.value)}
+              placeholder="Ej. Colaboradores de empresas agroindustriales de la provincia de Veraguas"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Presentación</label>
+            <textarea
+              className="input"
+              rows={4}
+              value={presentation}
+              onChange={(e) => setPresentation(e.target.value)}
+              placeholder="Párrafo(s) de presentación del estudio. Separe párrafos dejando una línea en blanco entre ellos."
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Instrucciones generales
+            </label>
+            <textarea
+              className="input"
+              rows={4}
+              value={instructions}
+              onChange={(e) => setInstructions(e.target.value)}
+              placeholder="Ej. Lea cuidadosamente cada afirmación antes de responder..."
+            />
+            <p className="mt-1 text-xs text-gray-400">
+              Si subió el cuestionario desde Word, este campo se llenó automáticamente con el
+              texto que estaba antes de la primera pregunta. Puede editarlo libremente.
+            </p>
+          </div>
+
+          <button className="btn-primary" onClick={handleSaveFormalInfo} disabled={savingFormal}>
+            {savingFormal ? 'Guardando...' : 'Guardar encabezado'}
+          </button>
+        </div>
       </div>
 
       {message && <div className="rounded-lg bg-green-50 px-4 py-2 text-sm text-green-700">{message}</div>}

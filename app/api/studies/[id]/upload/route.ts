@@ -46,6 +46,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     );
   }
 
+  // Si el estudio aún no tiene texto de instrucciones, se propone
+  // automáticamente el preámbulo detectado en el Word (presentación /
+  // instrucciones generales que aparecían antes de la primera pregunta).
+  const instructionsUpdate =
+    !study.instructions && parsed.preamble ? { instructions: parsed.preamble } : {};
+
   // Reemplaza las preguntas existentes del estudio por las recién importadas
   await prisma.$transaction([
     prisma.question.deleteMany({ where: { studyId: study.id } }),
@@ -60,6 +66,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         varName: `P${idx + 1}`,
       })),
     }),
+    ...(Object.keys(instructionsUpdate).length
+      ? [prisma.study.update({ where: { id: study.id }, data: instructionsUpdate })]
+      : []),
   ]);
 
   const questions = await prisma.question.findMany({

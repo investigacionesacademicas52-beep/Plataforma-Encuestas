@@ -20,6 +20,10 @@ export default async function SurveyPage({ params }: { params: { slug: string } 
         slug={study.slug}
         studyName={study.name}
         studyDescription={study.description}
+        institution={study.institution}
+        targetAudience={study.targetAudience}
+        presentation={study.presentation}
+        instructions={study.instructions}
         questions={study.questions.map((q) => ({
           id: q.id,
           text: q.text,
