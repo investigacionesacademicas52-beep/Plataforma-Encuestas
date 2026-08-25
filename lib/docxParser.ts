@@ -17,6 +17,7 @@ const OPEN_CUE_REGEX =
 const MULTIPLE_CUE_REGEX =
   /seleccione\s+todas|marque\s+todas|selecci[oó]n\s+m[uú]ltiple|puede\s+elegir\s+varias|elija\s+todas|puede\s+marcar\s+m[aá]s\s+de\s+una/i;
 const NUMBER_CUE_REGEX = /\bedad\b|\baños\b|n[uú]mero\s+de|cu[aá]ntos|cu[aá]ntas/i;
+const SCALE_CUE_REGEX = /\(\s*escala\s+1\s*a\s*5\s*\)/i;
 // Cualquier símbolo inicial (casilla ☐, bullet, guion, etc.) seguido de texto
 const LEADING_SYMBOL_REGEX = /^[^\p{L}\p{N}]+/u;
 
@@ -66,8 +67,9 @@ function parseFromTables($: cheerio.CheerioAPI): ParsedQuestion[] {
       .get();
     const numericHeaders = headerCells.filter((h) => /^\d{1,2}$/.test(h));
 
-    // --- Caso 1: matriz tipo Likert ---
-    if (numericHeaders.length >= 3 && rows.length > 1) {
+    // --- Caso 1: matriz tipo Likert (se exige varias filas de afirmaciones,
+    // para no confundir con una tabla de leyenda de la escala) ---
+    if (numericHeaders.length >= 3 && rows.length > 3) {
       for (let i = 1; i < rows.length; i++) {
         const cells = $(rows[i])
           .find('td,th')
@@ -134,7 +136,7 @@ function parseFromPlainText(rawText: string): ParsedQuestion[] {
     if ((!current.options || current.options.length === 0) && current.type === 'single') {
       current.type = NUMBER_CUE_REGEX.test(current.text) ? 'number' : 'text';
     }
-    if (current.options && current.options.length > 0 && current.type !== 'multiple') {
+    if (current.options && current.options.length > 0 && current.type !== 'multiple' && current.type !== 'scale') {
       current.type = 'single';
     }
     questions.push(current);
@@ -146,8 +148,15 @@ function parseFromPlainText(rawText: string): ParsedQuestion[] {
       pushCurrent();
       const text = qMatch[2].trim();
       current = { text, type: 'single', options: [], required: true };
-      if (MULTIPLE_CUE_REGEX.test(text)) current.type = 'multiple';
-      if (OPEN_CUE_REGEX.test(text)) current.type = 'textarea';
+      if (SCALE_CUE_REGEX.test(text)) {
+        current.type = 'scale';
+        current.options = ['1', '2', '3', '4', '5'];
+        current.text = text.replace(SCALE_CUE_REGEX, '').trim();
+      } else if (MULTIPLE_CUE_REGEX.test(text)) {
+        current.type = 'multiple';
+      } else if (OPEN_CUE_REGEX.test(text)) {
+        current.type = 'textarea';
+      }
       continue;
     }
 
